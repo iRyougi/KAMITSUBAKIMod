@@ -36,6 +36,8 @@ namespace KAMITSUBAKIMod
             {
                 Log.LogWarning($"Harmony PatchAll warning: {e.Message}");
             }
+
+            TextReplaceService.Init();
         }
 
         private void OnDestroy()
