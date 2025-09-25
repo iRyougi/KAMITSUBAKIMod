@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <GameDir>E:\KAMITSUBAKICITYREGENERATE</GameDir>
+    <BepInExDir>E:\KAMITSUBAKICITYREGENERATE\BepInEx</BepInExDir>
+    <GameManagedDir>E:\KAMITSUBAKICITYREGENERATE\Kamitsubaki_Data\Managed</GameManagedDir>
+    <BepInExPluginsDir>$(BepInExDir)\plugins</BepInExPluginsDir>
+  </PropertyGroup>
+</Project>

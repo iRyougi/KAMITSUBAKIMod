@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<Import Project="$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props"
+          Condition="Exists('$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props')" />
+
+	<PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>KAMITSUBAKIMod</AssemblyName>
+    <RootNamespace>KAMITSUBAKIMod</RootNamespace>
+    <Nullable>disable</Nullable>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="BepInEx">
+      <HintPath>$(BepInExDir)\core\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepInExDir)\core\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+	<Reference Include="UnityEngine">
+		<HintPath>$(GameManagedDir)\UnityEngine.dll</HintPath>
+		<Private>false</Private>
+	</Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(GameManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Optional for IntelliSense; not required to build -->
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(GameManagedDir)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="CopyToBepInEx" AfterTargets="Build" Condition="'$(BepInExPluginsDir)'!=''">
+    <MakeDir Directories="$(BepInExPluginsDir)\KAMITSUBAKIMod" />
+    <Copy SourceFiles="$(OutputPath)\KAMITSUBAKIMod.dll" DestinationFolder="$(BepInExPluginsDir)\KAMITSUBAKIMod" />
+  </Target>
+</Project>
+ 
