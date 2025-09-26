@@ -11,6 +11,7 @@
 		<Nullable>disable</Nullable>
 		<DebugType>portable</DebugType>
 		<DebugSymbols>false</DebugSymbols>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -51,6 +52,15 @@
 			<HintPath>$(GameManagedDir)\UnityEngine.JSONSerializeModule.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
+		<Reference Include="UnityEngine.ImageConversionModule">
+			<HintPath>$(GameManagedDir)\UnityEngine.ImageConversionModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine.AudioModule">
+			<HintPath>$(GameManagedDir)\UnityEngine.AudioModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		
 	</ItemGroup>
 
 	<Target Name="CopyToBepInEx" AfterTargets="Build" Condition="'$(BepInExPluginsDir)'!=''">

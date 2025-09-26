@@ -1,9 +1,8 @@
 ﻿using System.IO;
-using System.Linq;
-using System.Text.Json;
 using BepInEx.Logging;
 using KAMITSUBAKI.Framework.Manifests;
 using KAMITSUBAKI.Framework.Services;
+using UnityEngine;  // JsonUtility
 
 namespace KAMITSUBAKI.Framework.Loader
 {
@@ -16,14 +15,24 @@ namespace KAMITSUBAKI.Framework.Loader
         public void LoadAllMods(string root)
         {
             if (!Directory.Exists(root)) Directory.CreateDirectory(root);
+
             foreach (var dir in Directory.GetDirectories(root))
             {
-                var manifest = Path.Combine(dir, "mod.json");
-                if (!File.Exists(manifest)) continue;
+                var manifestPath = Path.Combine(dir, "mod.json");
+                if (!File.Exists(manifestPath)) continue;
 
                 ModManifest mf = null;
-                try { mf = JsonSerializer.Deserialize<ModManifest>(File.ReadAllText(manifest)); }
-                catch { _log.LogWarning($"[Mods] manifest error: {manifest}"); continue; }
+                try
+                {
+                    var json = File.ReadAllText(manifestPath);
+                    mf = JsonUtility.FromJson<ModManifest>(json);
+                }
+                catch
+                {
+                    _log.LogWarning($"[Mods] manifest error: {manifestPath}");
+                    continue;
+                }
+                if (mf == null) continue;
 
                 if (mf.mounts != null)
                 {

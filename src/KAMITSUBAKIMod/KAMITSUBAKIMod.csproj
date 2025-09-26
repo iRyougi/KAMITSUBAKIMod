@@ -11,6 +11,7 @@
 		<Nullable>disable</Nullable>
 		<DebugType>portable</DebugType>
 		<DebugSymbols>false</DebugSymbols>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 	</PropertyGroup>
 
 	<ItemGroup>
