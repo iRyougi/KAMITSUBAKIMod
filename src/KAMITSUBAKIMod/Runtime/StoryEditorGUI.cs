@@ -4,73 +4,194 @@ using System.IO;
 using System.Text;
 using BepInEx;
 using UnityEngine;
-using KAMITSUBAKIMod.Text;     // 用于读取/写入 .override.tsv（你之前的 ScriptOverrideStore.cs）
+using KAMITSUBAKIMod.Text;
 
 namespace KAMITSUBAKIMod.Runtime
 {
-    // F1 打开编辑器窗口；左侧选书，右侧分页编辑目标列（简中优先，其次 Text），保存到 script/<book>.override.tsv
+    // 让本脚本的 Update 比游戏里大多数脚本更早执行，优先清空输入
+    [DefaultExecutionOrder(-32000)]
     public class StoryEditorGUI : MonoBehaviour
     {
-        // 显示
+        // —— 显示状态 & 窗口属性 ——
         private bool _show;
         private Rect _win = new Rect(30, 30, 980, 560);
         private float _alpha = 0.9f;
         private bool _resizing = false;
 
-        // 列表/筛选/滚动
+        // 可调大小/字体
+        private int _w = 980, _h = 560;
+        private int _fontSize = 14;
+        private int _lastAppliedFontSize = -1;
+
+        // —— 输入屏蔽相关 ——
+        private bool _blockGameInput = true;   // 软屏蔽（清空输入轴）
+        private bool _pauseWhileOpen = false;  // 硬屏蔽（暂停时间）
+        private CursorLockMode _prevLock;
+        private bool _prevCursorVisible;
+        private float _prevTimeScale = 1f;
+
+        // —— 列表/筛选/滚动 ——
         private string _filter = "";
         private Vector2 _leftScroll;
         private Vector2 _rightScroll;
+        private bool _showEmptyRows = false;
 
-        // 当前书 & 数据
+        // —— 当前书 & 数据 ——
         private string _selected = null;
         private List<List<string>> _rows = null;  // rows[0] = header
         private int _colName = -1, _colText = -1, _colZh = -1, _targetCol = -1;
 
-        // 分页
+        // —— 分页 ——
         private int _page = 0;
         private const int PageSize = 20;
 
-        // 样式
+        // —— 样式 ——（只能在 OnGUI 里初始化/修改）
         private GUIStyle _labelWrap;
 
         private void Start()
         {
             DontDestroyOnLoad(gameObject);
-            _labelWrap = null; // 只能在 OnGUI 里基于 GUI.skin 创建
+            _labelWrap = null; // OnGUI 里再创建
+            _w = (int)_win.width; _h = (int)_win.height;
         }
 
         private void Update()
         {
-            if (UnityEngine.Input.GetKeyDown(KeyCode.F1)) _show = !_show;
+            // 先处理热键，再决定是否清空输入
+            if (UnityEngine.Input.GetKeyDown(KeyCode.F1))
+                ToggleShow();
+
+            // Ctrl+S 快捷保存
+            if (_show && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) && Input.GetKeyDown(KeyCode.S))
+            {
+                if (!string.IsNullOrEmpty(_selected) && _rows != null && _rows.Count > 1 && _targetCol >= 0)
+                    SaveOverrideTsv(_selected);
+            }
+
+            if (_show && _blockGameInput)
+                UnityEngine.Input.ResetInputAxes(); // 软屏蔽：尽早清空输入
+        }
+
+
+        private void LateUpdate()
+        {
+            // 双保险：在 LateUpdate 也清空一次，尽可能覆盖不同脚本顺序
+            if (_show && _blockGameInput)
+                UnityEngine.Input.ResetInputAxes();
+        }
+
+        private void ToggleShow()
+        {
+            _show = !_show;
+            if (_show)
+            {
+                _prevLock = Cursor.lockState;
+                _prevCursorVisible = Cursor.visible;
+                _prevTimeScale = Time.timeScale;
+
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+
+                if (_pauseWhileOpen) Time.timeScale = 0f;
+            }
+            else
+            {
+                Cursor.lockState = _prevLock;
+                Cursor.visible = _prevCursorVisible;
+
+                Time.timeScale = _prevTimeScale;
+            }
         }
 
         private void OnGUI()
         {
             if (!_show) return;
 
-            if (_labelWrap == null)
-                _labelWrap = new GUIStyle(GUI.skin.label) { wordWrap = true };
+            // 顶层吞掉窗口外的鼠标事件（点击/拖拽/滚轮），避免传到游戏
+            var e = Event.current;
+            if (_blockGameInput && e != null)
+            {
+                if ((e.isMouse || e.type == EventType.ScrollWheel) &&
+                    !_win.Contains(e.mousePosition))
+                {
+                    e.Use(); // 吞掉窗口外鼠标事件
+                }
+            }
 
-            var old = GUI.color;
+            // 透明度 & 字体大小
+            var oldColor = GUI.color;
             GUI.color = new Color(1f, 1f, 1f, _alpha);
+            ApplyFontSizeIfNeeded(); // 只能在 OnGUI 里改 GUI.skin
 
+            // 窗口
+            _win.width = _w; _win.height = _h;
             _win = GUI.Window(0xCAFE123, _win, DoWindow, "Story Editor (F1 toggle)");
 
-            GUI.color = old;
+            GUI.color = oldColor;
 
-            // 保证窗口在屏幕内
+            // 防止窗口跑出屏幕
             _win.x = Mathf.Clamp(_win.x, 0, Screen.width - 80);
             _win.y = Mathf.Clamp(_win.y, 0, Screen.height - 60);
         }
 
+        private void ApplyFontSizeIfNeeded()
+        {
+            if (_labelWrap == null || _lastAppliedFontSize != _fontSize)
+            {
+                var skin = GUI.skin;
+                skin.label.fontSize = _fontSize;
+                skin.button.fontSize = _fontSize;
+                skin.window.fontSize = _fontSize + 2;
+                skin.textField.fontSize = _fontSize;
+                skin.textArea.fontSize = _fontSize;
+                skin.toggle.fontSize = _fontSize;
+
+                _labelWrap = new GUIStyle(skin.label) { wordWrap = true, fontSize = _fontSize };
+                _lastAppliedFontSize = _fontSize;
+            }
+        }
+
         private void DoWindow(int id)
         {
-            // 顶部操作条
+            // 顶部控制条
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Opacity", GUILayout.Width(60));
+            GUILayout.Label("Opacity", GUILayout.Width(70));
             _alpha = GUILayout.HorizontalSlider(_alpha, 0.3f, 1f, GUILayout.Width(140));
+
+            GUILayout.Space(8);
+            _blockGameInput = GUILayout.Toggle(_blockGameInput, "Block input", GUILayout.Width(120));
+            var pauseNew = GUILayout.Toggle(_pauseWhileOpen, "Pause game", GUILayout.Width(120));
+            if (pauseNew != _pauseWhileOpen)
+            {
+                _pauseWhileOpen = pauseNew;
+                if (_show)
+                    Time.timeScale = _pauseWhileOpen ? 0f : _prevTimeScale;
+            }
+
+            GUILayout.Space(8);
+            _showEmptyRows = GUILayout.Toggle(_showEmptyRows, "Show empty rows", GUILayout.Width(150));
+
             GUILayout.FlexibleSpace();
+
+            // 仅当有选中的书且已加载行时可保存
+            GUI.enabled = !string.IsNullOrEmpty(_selected) && _rows != null && _rows.Count > 1 && _targetCol >= 0;
+            if (GUILayout.Button("Save Override", GUILayout.Width(120)))
+            {
+                SaveOverrideTsv(_selected);
+            }
+            if (GUILayout.Button("Open Folder", GUILayout.Width(110)))
+            {
+                OpenOverrideFolder();
+            }
+            GUI.enabled = true;
+
+            // 字体大小
+            GUILayout.Space(2);
+            GUILayout.Label($"Font {_fontSize}", GUILayout.Width(80));
+            _fontSize = Mathf.RoundToInt(GUILayout.HorizontalSlider(_fontSize, 10, 24, GUILayout.Width(150)));
+
+
+            GUILayout.Space(8);
             if (GUILayout.Button("Close", GUILayout.Width(70))) _show = false;
             GUILayout.EndHorizontal();
 
@@ -81,10 +202,10 @@ namespace KAMITSUBAKIMod.Runtime
             DrawRightPanel();
             GUILayout.EndHorizontal();
 
-            // 拖动窗口
+            // 窗口拖动
             GUI.DragWindow(new Rect(0, 0, _win.width, 24));
 
-            // 右下角缩放
+            // 右下角拉伸
             var rh = new Rect(_win.width - 18, _win.height - 18, 18, 18);
             GUI.DrawTexture(rh, Texture2D.whiteTexture);
             EditorResizeHandle(rh);
@@ -96,8 +217,8 @@ namespace KAMITSUBAKIMod.Runtime
             if (e.type == EventType.MouseDown && rh.Contains(e.mousePosition)) { _resizing = true; e.Use(); }
             if (_resizing && e.type == EventType.MouseDrag)
             {
-                _win.width = Mathf.Clamp(_win.width + e.delta.x, 600, Screen.width - _win.x - 20);
-                _win.height = Mathf.Clamp(_win.height + e.delta.y, 420, Screen.height - _win.y - 20);
+                _w = Mathf.Clamp(_w + Mathf.RoundToInt(e.delta.x), 700, Screen.width - (int)_win.x - 20);
+                _h = Mathf.Clamp(_h + Mathf.RoundToInt(e.delta.y), 420, Screen.height - (int)_win.y - 20);
                 e.Use();
             }
             if (e.type == EventType.MouseUp) _resizing = false;
@@ -110,7 +231,7 @@ namespace KAMITSUBAKIMod.Runtime
 
             GUILayout.Label("Story Books");
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Filter:", GUILayout.Width(45));
+            GUILayout.Label("Filter:", GUILayout.Width(50));
             _filter = GUILayout.TextField(_filter ?? "");
             GUILayout.EndHorizontal();
 
@@ -148,7 +269,6 @@ namespace KAMITSUBAKIMod.Runtime
                 int n = 0;
                 try
                 {
-                    // 枚举所有已加载对象，凡是名字以 .book 结尾的都注册
                     var all = Resources.FindObjectsOfTypeAll<UnityEngine.Object>();
                     foreach (var o in all)
                     {
@@ -156,7 +276,7 @@ namespace KAMITSUBAKIMod.Runtime
                         var nm = o.name;
                         if (!string.IsNullOrEmpty(nm) && nm.EndsWith(".book", StringComparison.OrdinalIgnoreCase))
                         {
-                            KAMITSUBAKIMod.Runtime.BookRegistry.Register(nm, o);
+                            BookRegistry.Register(nm, o);
                             n++;
                         }
                     }
@@ -166,10 +286,6 @@ namespace KAMITSUBAKIMod.Runtime
                 {
                     Debug.LogWarning("[Editor] ForceScan failed: " + ex.Message);
                 }
-            }
-            if (!string.IsNullOrEmpty(_selected) && GUILayout.Button("Save Override (.tsv)"))
-            {
-                SaveOverrideTsv(_selected);
             }
             GUILayout.EndHorizontal();
 
@@ -206,6 +322,10 @@ namespace KAMITSUBAKIMod.Runtime
             for (int i = start; i <= end; i++)
             {
                 var row = _rows[i] ?? new List<string>();
+
+                // —— 空行过滤（Name / Text / SimplifiedChinese 全空） ——
+                if (!_showEmptyRows && IsEmptyRow(row)) continue;
+
                 GUILayout.BeginVertical(GUI.skin.box);
 
                 // 行号 + 角色名
@@ -215,13 +335,19 @@ namespace KAMITSUBAKIMod.Runtime
                     GUILayout.Label(row[_colName] ?? "", _labelWrap);
                 GUILayout.EndHorizontal();
 
-                // 原文（优先 Text）
-                string src = (_colText >= 0 && _colText < row.Count) ? (row[_colText] ?? "") :
-                             (_colZh >= 0 && _colZh < row.Count) ? (row[_colZh] ?? "") : "";
-                if (!string.IsNullOrEmpty(src))
+                // JP + CN 展示
+                string jp = (_colText >= 0 && _colText < row.Count) ? (row[_colText] ?? "") : "";
+                string cn = (_colZh >= 0 && _colZh < row.Count) ? (row[_colZh] ?? "") : "";
+
+                if (!string.IsNullOrEmpty(jp))
                 {
-                    GUILayout.Label("Source:", GUILayout.Width(70));
-                    GUILayout.Label(src.Replace("\n", "\\n"), _labelWrap);
+                    GUILayout.Label("JP(Text):");
+                    GUILayout.Label(jp.Replace("\n", "\\n"), _labelWrap);
+                }
+                if (!string.IsNullOrEmpty(cn))
+                {
+                    GUILayout.Label("CN(SimplifiedChinese):");
+                    GUILayout.Label(cn.Replace("\n", "\\n"), _labelWrap);
                 }
 
                 // 目标列编辑（简中优先）
@@ -247,7 +373,7 @@ namespace KAMITSUBAKIMod.Runtime
         {
             var header = _rows[0];
             GUILayout.BeginHorizontal(GUI.skin.box);
-            GUILayout.Label("Columns:", GUILayout.Width(70));
+            GUILayout.Label("Columns:", GUILayout.Width(80));
             GUILayout.Label($"Name={IdxToName(_colName, header)} | Text={IdxToName(_colText, header)} | Zh={IdxToName(_colZh, header)} | Target={IdxToName(_targetCol, header)}");
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
@@ -269,15 +395,25 @@ namespace KAMITSUBAKIMod.Runtime
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("<<", GUILayout.Width(40))) _page = 0;
             if (GUILayout.Button("<", GUILayout.Width(40))) _page = Mathf.Max(0, _page - 1);
-            GUILayout.Label($"Page {_page + 1}/{totalPages}  (rows={totalData})", GUILayout.Width(220));
+            GUILayout.Label($"Page {_page + 1}/{totalPages}  (rows={totalData})", GUILayout.Width(240));
             if (GUILayout.Button(">", GUILayout.Width(40))) _page = Mathf.Min(totalPages - 1, _page + 1);
             if (GUILayout.Button(">>", GUILayout.Width(40))) _page = totalPages - 1;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
         }
 
-        // ---------- 数据加载/保存 ----------
+        // 打开覆盖文件夹
+        private void OpenOverrideFolder()
+        {
+            var dir = Path.Combine(Paths.PluginPath, "KAMITSUBAKIMod", "script");
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            // Windows 下用 explorer 打开
+            try { System.Diagnostics.Process.Start(dir); }
+            catch { Debug.Log($"[Editor] Folder: {dir}"); }
+        }
 
+
+        // ---------- 数据加载/保存 ----------
         private void LoadRowsFromObject(UnityEngine.Object obj, string bookNameForOverride)
         {
             _rows = null; _colName = _colText = _colZh = _targetCol = -1; _page = 0;
@@ -296,7 +432,7 @@ namespace KAMITSUBAKIMod.Runtime
             _colZh = IndexOf(header, "SimplifiedChinese");
             _targetCol = (_colZh >= 0) ? _colZh : _colText;
 
-            // 读取现有 override 作为初始值（若存在）
+            // 应用已有 override
             if (!string.IsNullOrEmpty(bookNameForOverride))
             {
                 var ov = ScriptOverrideStore.LoadFor(bookNameForOverride);
@@ -304,8 +440,8 @@ namespace KAMITSUBAKIMod.Runtime
                 {
                     foreach (var kv in ov.LineToText)
                     {
-                        int rowIdx = kv.Key;       // 数据行：从 1 起
-                        int real = 0 + rowIdx;     // header 在 0
+                        int rowIdx = kv.Key;       // 数据行从 1 起
+                        int real = rowIdx;       // header 在 0
                         if (real > 0 && real < _rows.Count)
                             SetCell(_rows[real], _targetCol, kv.Value);
                     }
@@ -323,7 +459,7 @@ namespace KAMITSUBAKIMod.Runtime
 
             var sb = new StringBuilder();
 
-            // 头：尽量输出 Name/Text/SimplifiedChinese 三列（存在的才写）
+            // 头
             var header = _rows[0];
             var cols = new List<string>();
             if (_colName >= 0) cols.Add("CharacterName");
@@ -332,7 +468,7 @@ namespace KAMITSUBAKIMod.Runtime
             if (cols.Count == 0) cols.AddRange(header);
             sb.AppendLine(string.Join("\t", cols.ToArray()));
 
-            // 行：目标列非空就写；空代表不覆盖
+            // 行
             for (int i = 1; i < _rows.Count; i++)
             {
                 var r = _rows[i];
@@ -358,7 +494,7 @@ namespace KAMITSUBAKIMod.Runtime
             Debug.Log($"[Editor] Saved override: {path}");
         }
 
-        // ---------- 轻量 JSON 解析（提取所有 "strings":[ ... ] 为二维数组） ----------
+        // ---------- 提取 JSON 中所有 "strings":[ ... ] ----------
         struct ArraySpan { public int start; public int end; }
 
         private static List<List<string>> ExtractAllStringsArrays(string json, out List<ArraySpan> spans)
@@ -437,6 +573,14 @@ namespace KAMITSUBAKIMod.Runtime
             if (row == null || idx < 0) return;
             while (row.Count <= idx) row.Add("");
             row[idx] = val ?? "";
+        }
+
+        private bool IsEmptyRow(List<string> r)
+        {
+            string name = GetCell(r, _colName);
+            string jp = GetCell(r, _colText);
+            string cn = GetCell(r, _colZh);
+            return string.IsNullOrEmpty(name) && string.IsNullOrEmpty(jp) && string.IsNullOrEmpty(cn);
         }
     }
 }
