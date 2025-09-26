@@ -117,6 +117,19 @@ namespace KAMITSUBAKIMod.Runtime
                 for (int i = startRow; i < rows.Count; i++)
                 {
                     var r = rows[i] ?? new List<string>();
+
+                    // === 新增：检查是否整行为空 ===
+                    bool allEmpty = true;
+                    foreach (var cell in r)
+                    {
+                        if (!string.IsNullOrEmpty(cell))
+                        {
+                            allEmpty = false;
+                            break;
+                        }
+                    }
+                    if (allEmpty) continue; // 跳过整行空的
+
                     List<string> outRow = new List<string>();
 
                     if (outHeader.Count > 0 && (colText >= 0 || colZh >= 0 || colEn >= 0 || colName >= 0))
@@ -138,8 +151,22 @@ namespace KAMITSUBAKIMod.Runtime
                         if (outRow[k] != null)
                             outRow[k] = outRow[k].Replace("\r\n", "\\n").Replace("\n", "\\n");
                     }
+
+                    // 再检查输出列是否全空
+                    bool outEmpty = true;
+                    foreach (var cell in outRow)
+                    {
+                        if (!string.IsNullOrEmpty(cell))
+                        {
+                            outEmpty = false;
+                            break;
+                        }
+                    }
+                    if (outEmpty) continue; // 跳过全空的输出行
+
                     sb.AppendLine(string.Join("\t", outRow.ToArray()));
                 }
+
 
                 var safe = DumpUtil.MakeSafe(assetName);
                 var file = Path.Combine(DumpUtil.DumpDir, safe + ".tsv");
