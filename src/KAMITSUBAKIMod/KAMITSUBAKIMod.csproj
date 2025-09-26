@@ -59,6 +59,15 @@
 		  <HintPath>$(GameManagedDir)\UnityEngine.JSONSerializeModule.dll</HintPath>
 		  <Private>false</Private>
 	  </Reference>
+	  <Reference Include="UnityEngine.IMGUIModule">
+		  <HintPath>$(GameManagedDir)\UnityEngine.IMGUIModule.dll</HintPath>
+		  <Private>false</Private>
+	  </Reference>
+	  <Reference Include="UnityEngine.InputLegacyModule">
+		  <HintPath>$(GameManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath>
+		  <Private>false</Private>
+	  </Reference>
+
   </ItemGroup>
 
   <Target Name="CopyToBepInEx" AfterTargets="Build" Condition="'$(BepInExPluginsDir)'!=''">

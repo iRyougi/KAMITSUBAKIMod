@@ -62,6 +62,40 @@ namespace KAMITSUBAKIMod.Patches
                 BepInEx.Logging.Logger.CreateLogSource("KAMITSUBAKIMod")
                     .LogWarning("AB book rewrite failed: " + e.Message);
             }
+
+            if (!string.IsNullOrEmpty(name) && name.EndsWith(".book", StringComparison.OrdinalIgnoreCase))
+            {
+                // 已有：Dump JSON / 应用覆盖 …
+                // 新增：注册给 GUI
+                // 命中 .book 后 —— 无论是用 name 还是 obj.name，都注册到 GUI
+                try
+                {
+                    string key = null;
+
+                    // 优先用 AB 传入的 name
+                    if (!string.IsNullOrEmpty(name) && name.EndsWith(".book", StringComparison.OrdinalIgnoreCase))
+                        key = name;
+
+                    // 兜底用对象自己的 name（很多 AdvImportBook 的 obj.name 就是 story0001.book）
+                    if (string.IsNullOrEmpty(key))
+                    {
+                        var on = __result.name; // UnityEngine.Object.name
+                        if (!string.IsNullOrEmpty(on) && on.EndsWith(".book", StringComparison.OrdinalIgnoreCase))
+                            key = on;
+                    }
+
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        KAMITSUBAKIMod.Runtime.BookRegistry.Register(key, __result);
+                        Debug.Log($"[Editor] Register book from AB: {key} ({__result.GetType().Name})");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[Editor] Register in AB failed: " + ex.Message);
+                }
+
+            }
         }
     }
 }

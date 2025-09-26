@@ -44,6 +44,11 @@ namespace KAMITSUBAKIMod.Runtime
 
                 var typeName = o.GetType().FullName ?? o.GetType().Name;
 
+                // 例如你导出时的变量 nm == "story0001.book"
+                KAMITSUBAKIMod.Runtime.BookRegistry.Register(nm, o);
+                Debug.Log($"[Editor] Register book from Scanner: {nm} ({o.GetType().Name})");
+
+
                 // 1) 先保存原始 JSON
                 try
                 {
