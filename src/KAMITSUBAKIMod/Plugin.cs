@@ -1,6 +1,7 @@
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using KAMITSUBAKIMod.Runtime;
 using UnityEngine;
 
 namespace KAMITSUBAKIMod
@@ -25,6 +26,16 @@ namespace KAMITSUBAKIMod
             go.hideFlags = HideFlags.HideAndDontSave;
             go.AddComponent<UpdateLogger>();
 
+            // book文件扫描器()
+            var scannerGO = new GameObject("KAMITSUBAKI_BookScanner");
+            scannerGO.hideFlags = HideFlags.HideAndDontSave;
+            scannerGO.AddComponent<KAMITSUBAKIMod.Runtime.BookScanner>();
+
+            // （如果你也加了 LiveRewriter/Dumper）
+            var dumperGO = new GameObject("KAMITSUBAKI_BookLiveRewriter");
+            dumperGO.hideFlags = HideFlags.HideAndDontSave;
+            dumperGO.AddComponent<KAMITSUBAKIMod.Runtime.BookLiveRewriter>();
+
             // 2) (Optional) Apply Harmony patches declared with [HarmonyPatch]
             _harmony = new Harmony(PluginGuid);
             try
@@ -37,7 +48,13 @@ namespace KAMITSUBAKIMod
                 Log.LogWarning($"Harmony PatchAll warning: {e.Message}");
             }
 
-            TextReplaceService.Init();
+            // ① 先加载你的替换表（CSV）
+            Text.TextBookMap.Load();
+
+            _harmony = new Harmony(PluginGuid);
+            _harmony.PatchAll();
+
+            Logger.LogInfo($"{PluginName} {PluginVersion} loaded");
         }
 
         private void OnDestroy()
@@ -56,7 +73,7 @@ namespace KAMITSUBAKIMod
             if (_timer >= 2f) // log every ~2 seconds to avoid spam
             {
                 _timer = 0f;
-                Plugin.Log?.LogInfo("[KAMITSUBAKIMod] Update tick");
+                Plugin.Log?.LogInfo("[KAMITSUBAKI注入] 正在运行");
             }
         }
     }

@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<Import Project="$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props"
-          Condition="Exists('$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props')" />
+	<Import Project="$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props" Condition="Exists('$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props')" />
 
 	<PropertyGroup>
     <TargetFramework>net472</TargetFramework>
@@ -36,9 +35,28 @@
 		  <HintPath>$(GameManagedDir)\Assembly-CSharp.dll</HintPath>
 		  <Private>false</Private>
 	  </Reference>
-
 	  <Reference Include="UnityEngine.UI">
 		  <HintPath>$(GameManagedDir)\UnityEngine.UI.dll</HintPath>
+		  <Private>false</Private>
+	  </Reference>
+	  <Reference Include="Unity.TextMeshPro">
+		  <HintPath>$(GameManagedDir)\Unity.TextMeshPro.dll</HintPath>
+		  <Private>false</Private>
+	  </Reference>
+	  <Reference Include="Newtonsoft.Json">
+		  <HintPath>$(GameManagedDir)\Newtonsoft.Json.dll</HintPath>
+		  <Private>false</Private>
+	  </Reference>
+	  <Reference Include="Newtonsoft.Json">
+		  <HintPath>$(GameManagedDir)\Newtonsoft.Json.dll</HintPath>
+		  <Private>false</Private>
+	  </Reference>
+	  <Reference Include="UnityEngine.AssetBundleModule">
+		  <HintPath>$(GameManagedDir)\UnityEngine.AssetBundleModule.dll</HintPath>
+		  <Private>false</Private>
+	  </Reference>
+	  <Reference Include="UnityEngine.JSONSerializeModule">
+		  <HintPath>$(GameManagedDir)\UnityEngine.JSONSerializeModule.dll</HintPath>
 		  <Private>false</Private>
 	  </Reference>
   </ItemGroup>

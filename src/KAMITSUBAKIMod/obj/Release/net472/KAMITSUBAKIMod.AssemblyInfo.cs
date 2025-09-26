@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KAMITSUBAKIMod")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1ad050e39708cfaddf7639eed5ca919ca9de4185")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d368296b4777198993a9533b40b0e0e20bdc776c")]
 [assembly: System.Reflection.AssemblyProductAttribute("KAMITSUBAKIMod")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KAMITSUBAKIMod")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
