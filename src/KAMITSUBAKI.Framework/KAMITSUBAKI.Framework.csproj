@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<Import Project="$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props" Condition="Exists('$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props')" />
 
