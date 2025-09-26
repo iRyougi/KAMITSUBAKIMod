@@ -1,6 +1,5 @@
-/src/KAMITSUBAKIMod/bin/
-/src/KAMITSUBAKIMod/obj/
-/src/KAMITSUBAKIMod/.vs/
+bin/
+obj/
 .vs/
 *.user
 *.suo
