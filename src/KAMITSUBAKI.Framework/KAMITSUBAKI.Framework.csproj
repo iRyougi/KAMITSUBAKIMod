@@ -1,0 +1,70 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<Import Project="$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props" Condition="Exists('$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props')" />
+
+	<PropertyGroup>
+		<TargetFramework>net472</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<AssemblyName>KAMITSUBAKI.Framework</AssemblyName>
+		<RootNamespace>KAMITSUBAKI.Framework</RootNamespace>
+		<Nullable>disable</Nullable>
+		<DebugType>portable</DebugType>
+		<DebugSymbols>false</DebugSymbols>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="BepInEx">
+			<HintPath>$(BepInExDir)\core\BepInEx.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="0Harmony">
+			<HintPath>$(BepInExDir)\core\0Harmony.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine">
+			<HintPath>$(GameManagedDir)\UnityEngine.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>$(GameManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<!-- 只要框架里不直接用 Assembly-CSharp/Game 脚本，可不引用 -->
+		<Reference Include="UnityEngine.UI">
+			<HintPath>$(GameManagedDir)\UnityEngine.UI.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="Unity.TextMeshPro">
+			<HintPath>$(GameManagedDir)\Unity.TextMeshPro.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="Newtonsoft.Json">
+			<HintPath>$(GameManagedDir)\Newtonsoft.Json.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine.AssetBundleModule">
+			<HintPath>$(GameManagedDir)\UnityEngine.AssetBundleModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine.JSONSerializeModule">
+			<HintPath>$(GameManagedDir)\UnityEngine.JSONSerializeModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine.ImageConversionModule">
+			<HintPath>$(GameManagedDir)\UnityEngine.ImageConversionModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="UnityEngine.AudioModule">
+			<HintPath>$(GameManagedDir)\UnityEngine.AudioModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		
+	</ItemGroup>
+
+	<Target Name="CopyToBepInEx" AfterTargets="Build" Condition="'$(BepInExPluginsDir)'!=''">
+		<MakeDir Directories="$(BepInExPluginsDir)\KAMITSUBAKI.Framework" />
+		<Copy SourceFiles="$(OutputPath)\KAMITSUBAKI.Framework.dll" DestinationFolder="$(BepInExPluginsDir)\KAMITSUBAKI.Framework" />
+	</Target>
+</Project>

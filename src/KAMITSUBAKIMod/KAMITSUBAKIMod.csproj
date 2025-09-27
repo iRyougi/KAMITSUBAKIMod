@@ -3,15 +3,16 @@
 	<Import Project="$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props" Condition="Exists('$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props')" />
 
 	<PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <AssemblyName>KAMITSUBAKIMod</AssemblyName>
-    <RootNamespace>KAMITSUBAKIMod</RootNamespace>
-    <Nullable>disable</Nullable>
-    <DebugType>portable</DebugType>
-    <DebugSymbols>false</DebugSymbols>
-  </PropertyGroup>
+		<TargetFramework>net472</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<AssemblyName>KAMITSUBAKI.Framework</AssemblyName>
+		<RootNamespace>KAMITSUBAKI.Framework</RootNamespace>
+		<Nullable>disable</Nullable>
+		<DebugType>portable</DebugType>
+		<DebugSymbols>false</DebugSymbols>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+	</PropertyGroup>
 
   <ItemGroup>
 	  <Reference Include="BepInEx">
@@ -67,12 +68,10 @@
 		  <HintPath>$(GameManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath>
 		  <Private>false</Private>
 	  </Reference>
-
   </ItemGroup>
 
-  <Target Name="CopyToBepInEx" AfterTargets="Build" Condition="'$(BepInExPluginsDir)'!=''">
-    <MakeDir Directories="$(BepInExPluginsDir)\KAMITSUBAKIMod" />
-    <Copy SourceFiles="$(OutputPath)\KAMITSUBAKIMod.dll" DestinationFolder="$(BepInExPluginsDir)\KAMITSUBAKIMod" />
-  </Target>
+	<Target Name="CopyToBepInEx" AfterTargets="Build" Condition="'$(BepInExPluginsDir)'!=''">
+		<MakeDir Directories="$(BepInExPluginsDir)\KAMITSUBAKI.Framework" />
+		<Copy SourceFiles="$(OutputPath)\KAMITSUBAKI.Framework.dll" DestinationFolder="$(BepInExPluginsDir)\KAMITSUBAKI.Framework" />
+	</Target>
 </Project>
- 
