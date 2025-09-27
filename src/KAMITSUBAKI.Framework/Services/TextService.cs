@@ -20,6 +20,7 @@ namespace KAMITSUBAKI.Framework.Services
             _log = log;
             _scriptWorkspace = Path.Combine(Paths.PluginPath, "KAMITSUBAKIMod", "scripts");
             if (!Directory.Exists(_scriptWorkspace)) Directory.CreateDirectory(_scriptWorkspace);
+            _log.LogInfo("[Texts] workspace=" + _scriptWorkspace);
         }
 
         public void ApplyOverrideForBook(string bookName, UnityEngine.Object obj)
@@ -56,7 +57,7 @@ namespace KAMITSUBAKI.Framework.Services
                 if (!string.IsNullOrEmpty(patched) && !object.ReferenceEquals(patched, json))
                 {
                     JsonUtility.FromJsonOverwrite(patched, obj);
-                    _log.LogInfo("[Texts] applied override " + bookName + " (" + lineMap.Count + " lines)");
+                    _log.LogInfo("[Texts] applied override " + bookName + " (" + lineMap.Count + " lines) file=" + path);
                 }
             }
             catch (Exception ex) { _log.LogWarning("[Texts] apply failed: " + ex); }
@@ -71,11 +72,24 @@ namespace KAMITSUBAKI.Framework.Services
             for (int i = 0; i < candidates.Length; i++)
             {
                 string v = candidates[i];
-                string full;
-                if (Framework.FrameworkPlugin.Assets.TryGetOverrideFile(v, out full)) return full;
+                // 先查挂载的 VFS
+                if (Framework.FrameworkPlugin.Assets != null && Framework.FrameworkPlugin.Assets.TryGetOverrideFile(v, out var full))
+                {
+                    _log.LogInfo("[Texts] override (VFS) hit: " + v + " -> " + full);
+                    return full;
+                }
 
+                // 再查工作区脚本目录
                 var ws = Path.Combine(_scriptWorkspace, Path.GetFileName(v));
-                if (File.Exists(ws)) return ws;
+                if (File.Exists(ws))
+                {
+                    _log.LogInfo("[Texts] override (workspace) hit: " + ws);
+                    return ws;
+                }
+                else
+                {
+                    _log.LogDebug("[Texts] miss: " + v);
+                }
             }
             return null;
         }

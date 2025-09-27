@@ -6,8 +6,8 @@
 		<TargetFramework>net472</TargetFramework>
 		<LangVersion>latest</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<AssemblyName>KAMITSUBAKI.Framework</AssemblyName>
-		<RootNamespace>KAMITSUBAKI.Framework</RootNamespace>
+		<AssemblyName>KAMITSUBAKIMod</AssemblyName>
+		<RootNamespace>KAMITSUBAKIMod</RootNamespace>
 		<Nullable>disable</Nullable>
 		<DebugType>portable</DebugType>
 		<DebugSymbols>false</DebugSymbols>
@@ -48,10 +48,6 @@
 		  <HintPath>$(GameManagedDir)\Newtonsoft.Json.dll</HintPath>
 		  <Private>false</Private>
 	  </Reference>
-	  <Reference Include="Newtonsoft.Json">
-		  <HintPath>$(GameManagedDir)\Newtonsoft.Json.dll</HintPath>
-		  <Private>false</Private>
-	  </Reference>
 	  <Reference Include="UnityEngine.AssetBundleModule">
 		  <HintPath>$(GameManagedDir)\UnityEngine.AssetBundleModule.dll</HintPath>
 		  <Private>false</Private>
@@ -68,10 +64,11 @@
 		  <HintPath>$(GameManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath>
 		  <Private>false</Private>
 	  </Reference>
+	  <ProjectReference Include="..\KAMITSUBAKI.Framework\KAMITSUBAKI.Framework.csproj" />
   </ItemGroup>
 
-	<Target Name="CopyToBepInEx" AfterTargets="Build" Condition="'$(BepInExPluginsDir)'!=''">
-		<MakeDir Directories="$(BepInExPluginsDir)\KAMITSUBAKI.Framework" />
-		<Copy SourceFiles="$(OutputPath)\KAMITSUBAKI.Framework.dll" DestinationFolder="$(BepInExPluginsDir)\KAMITSUBAKI.Framework" />
+	<Target Name="CopyModToBepInEx" AfterTargets="Build" Condition="'$(BepInExPluginsDir)'!=''">
+		<MakeDir Directories="$(BepInExPluginsDir)\KAMITSUBAKIMod" />
+		<Copy SourceFiles="$(OutputPath)\KAMITSUBAKIMod.dll" DestinationFolder="$(BepInExPluginsDir)\KAMITSUBAKIMod" />
 	</Target>
 </Project>

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using KAMITSUBAKI.Framework;
+
 namespace KAMITSUBAKIMod.Runtime
 {
     // 保存已发现的 .book 资源，供 GUI 列表使用
@@ -43,6 +45,9 @@ namespace KAMITSUBAKIMod.Runtime
                 BookOverrideRuntime.TryApplyOnRegister(bookName, obj);
                 e.OverrideApplied = true;
             }
+
+            // 通过接口访问（FrameworkPlugin.Texts 是 ITextService）
+            FrameworkPlugin.Texts.ApplyOverrideForBook(bookName, obj);
         }
 
         public static List<Entry> List() => new List<Entry>(_byName.Values);

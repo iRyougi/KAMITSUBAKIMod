@@ -26,14 +26,16 @@ namespace KAMITSUBAKI.Framework.Services
 
         public void AddMount(string modId, string fromDir, string toVirtualRoot, int priority)
         {
-            _mounts.Add(new Mount
+            var mount = new Mount
             {
                 ModId = modId,
                 From = Path.GetFullPath(fromDir ?? "."),
                 To = (toVirtualRoot ?? "").Replace("\\", "/"),
                 Priority = priority
-            });
+            };
+            _mounts.Add(mount);
             _mounts.Sort((a, b) => b.Priority.CompareTo(a.Priority));
+            _log.LogInfo($"[VFS] mount add: {mount.ModId} from='{mount.From}' -> '{mount.To}' prio={mount.Priority} exists={(Directory.Exists(mount.From) ? 1:0)} total={_mounts.Count}");
         }
 
         public bool TryGetOverrideFile(string virtualPath, out string fullPath)
@@ -51,7 +53,16 @@ namespace KAMITSUBAKI.Framework.Services
                 if (rel == null) continue;
 
                 var candidate = Path.Combine(m.From, rel);
-                if (File.Exists(candidate)) { fullPath = candidate; return true; }
+                if (File.Exists(candidate))
+                {
+                    fullPath = candidate;
+                    _log.LogInfo($"[VFS] hit {virtualPath} => {candidate} (mod={m.ModId})");
+                    return true;
+                }
+                else
+                {
+                    _log.LogDebug($"[VFS] miss {virtualPath} tried {candidate} (mod={m.ModId})");
+                }
             }
             fullPath = null; return false;
         }
@@ -71,7 +82,7 @@ namespace KAMITSUBAKI.Framework.Services
                 if (obj != null)
                 {
                     _cache[key] = obj;
-                    _log.LogInfo("[VFS] hit " + virtualPath + " -> " + file);
+                    _log.LogInfo("[VFS] load " + virtualPath + " -> " + file);
                     return true;
                 }
             }
@@ -93,7 +104,6 @@ namespace KAMITSUBAKI.Framework.Services
             }
             if (type == typeof(AudioClip))
             {
-                // 先空着；等你需要时上 UWR 异步加载 OGG/WAV
                 return null;
             }
             return null;

@@ -7,6 +7,7 @@ using UnityEngine;
 namespace KAMITSUBAKIMod
 {
     [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
+    [BepInDependency("kamitsubaki.framework", BepInDependency.DependencyFlags.HardDependency)] // 确保框架先于本 Mod 加载
     public class Plugin : BaseUnityPlugin
     {
         public const string PluginGuid = "com.iryougi.kcr.kamitsubakimod";
@@ -20,67 +21,60 @@ namespace KAMITSUBAKIMod
         {
             Log = Logger;
 
-            //组件注册
+            // 基础运行组件
+            var go = new GameObject("KAMITSUBAKIModRunner") { hideFlags = HideFlags.HideAndDontSave };
+            DontDestroyOnLoad(go); go.AddComponent<UpdateLogger>();
 
-            // 1) Start a simple runner that logs in Update (visible proof the mod is running)
-            var go = new GameObject("KAMITSUBAKIModRunner");
-            GameObject.DontDestroyOnLoad(go);
-            go.hideFlags = HideFlags.HideAndDontSave;
-            go.AddComponent<UpdateLogger>();
+            var scannerGO = new GameObject("KAMITSUBAKI_BookScanner") { hideFlags = HideFlags.HideAndDontSave };
+            DontDestroyOnLoad(scannerGO); scannerGO.AddComponent<BookScanner>();
 
-            // book文件扫描器()
-            var scannerGO = new GameObject("KAMITSUBAKI_BookScanner");
-            scannerGO.hideFlags = HideFlags.HideAndDontSave;
-            scannerGO.AddComponent<KAMITSUBAKIMod.Runtime.BookScanner>();
+            var rewriterGO = new GameObject("KAMITSUBAKI_BookLiveRewriter") { hideFlags = HideFlags.HideAndDontSave };
+            DontDestroyOnLoad(rewriterGO); rewriterGO.AddComponent<BookLiveRewriter>();
 
-            // （如果你也加了 LiveRewriter/Dumper）
-            var dumperGO = new GameObject("KAMITSUBAKI_BookLiveRewriter");
-            dumperGO.hideFlags = HideFlags.HideAndDontSave;
-            dumperGO.AddComponent<KAMITSUBAKIMod.Runtime.BookLiveRewriter>();
+            var editorGO = new GameObject("KAMITSUBAKI_StoryEditorGUI") { hideFlags = HideFlags.HideAndDontSave };
+            DontDestroyOnLoad(editorGO); editorGO.AddComponent<StoryEditorGUI>();
 
-            var editorGO = new GameObject("KAMITSUBAKI_StoryEditorGUI");
-            editorGO.hideFlags = HideFlags.HideAndDontSave;
-            UnityEngine.Object.DontDestroyOnLoad(editorGO);
-            editorGO.AddComponent<KAMITSUBAKIMod.Runtime.StoryEditorGUI>();
-
-            // 2) (Optional) Apply Harmony patches declared with [HarmonyPatch]
+            // Harmony 只初始化一次
             _harmony = new Harmony(PluginGuid);
             try
             {
                 _harmony.PatchAll();
-                Log.LogInfo($"{PluginName} {PluginVersion} loaded (PatchAll ok)");
+                Log.LogInfo($"{PluginName} {PluginVersion} patched");
             }
             catch (System.Exception e)
             {
-                Log.LogWarning($"Harmony PatchAll warning: {e.Message}");
+                Log.LogError("Harmony PatchAll failed: " + e);
             }
 
-            // ① 先加载你的替换表（CSV）
+            // 载入文本替换映射
             Text.TextBookMap.Load();
 
-            _harmony = new Harmony(PluginGuid);
-            _harmony.PatchAll();
+            // 诊断：确认框架是否已加载
+            if (KAMITSUBAKI.Framework.FrameworkPlugin.Assets == null)
+                Log.LogWarning("FrameworkPlugin.Assets is null (framework may not have loaded!)");
+            else
+                Log.LogInfo("Framework detected (Assets service ready)");
 
             Logger.LogInfo($"{PluginName} {PluginVersion} loaded");
         }
 
         private void OnDestroy()
         {
-            _harmony?.UnpatchSelf();
+            try { _harmony?.UnpatchSelf(); } catch { }
         }
     }
 
-    // A tiny MonoBehaviour to demonstrate Update() logging without touching game code
     public class UpdateLogger : MonoBehaviour
     {
-        private float _timer;
+        float _timer;
         void Update()
         {
             _timer += Time.unscaledDeltaTime;
-            if (_timer >= 2f) // log every ~2 seconds to avoid spam
+            if (_timer >= 5f)
             {
                 _timer = 0f;
-                // Plugin.Log?.LogInfo("[KAMITSUBAKI注入] 正在运行");  // 取消注释以启用运行日志
+                // 可在此输出轻量心跳日志以确认未卡死
+                // Plugin.Log?.LogDebug("[Heartbeat]");
             }
         }
     }
