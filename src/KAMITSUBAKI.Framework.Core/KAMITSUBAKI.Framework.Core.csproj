@@ -1,22 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<Import Project="$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props" Condition="Exists('$(MSBuildProjectDirectory)\..\..\build\Directory.Build.props')" />
 
 	<PropertyGroup>
 		<TargetFramework>net472</TargetFramework>
 		<LangVersion>latest</LangVersion>
-		<AssemblyName>KAMITSUBAKIMod</AssemblyName>
-		<RootNamespace>KAMITSUBAKIMod</RootNamespace>
+		<AssemblyName>KAMITSUBAKI.Framework.Core</AssemblyName>
+		<RootNamespace>KAMITSUBAKI.Framework.Core</RootNamespace>
 		<Nullable>disable</Nullable>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\KAMITSUBAKI.Framework.Core\KAMITSUBAKI.Framework.Core.csproj" />
-		<ProjectReference Include="..\KAMITSUBAKI.Framework.Services\KAMITSUBAKI.Framework.Services.csproj" />
-		<ProjectReference Include="..\KAMITSUBAKIMod.Text\KAMITSUBAKIMod.Text.csproj" />
-		<ProjectReference Include="..\KAMITSUBAKIMod.Runtime\KAMITSUBAKIMod.Runtime.csproj" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="BepInEx">
@@ -35,14 +28,10 @@
 			<HintPath>$(GameManagedDir)\UnityEngine.CoreModule.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
-		<Reference Include="UnityEngine.AssetBundleModule">
-			<HintPath>$(GameManagedDir)\UnityEngine.AssetBundleModule.dll</HintPath>
-			<Private>false</Private>
-		</Reference>
 	</ItemGroup>
 
 	<Target Name="CopyToBepInEx" AfterTargets="Build" Condition="'$(BepInExPluginsDir)'!=''">
-		<MakeDir Directories="$(BepInExPluginsDir)\KAMITSUBAKIMod" />
-		<Copy SourceFiles="$(OutputPath)\KAMITSUBAKIMod.dll;$(OutputPath)\KAMITSUBAKIMod.Text.dll;$(OutputPath)\KAMITSUBAKIMod.Runtime.dll" DestinationFolder="$(BepInExPluginsDir)\KAMITSUBAKIMod" />
+		<MakeDir Directories="$(BepInExPluginsDir)\KAMITSUBAKI.Framework" />
+		<Copy SourceFiles="$(OutputPath)\KAMITSUBAKI.Framework.Core.dll" DestinationFolder="$(BepInExPluginsDir)\KAMITSUBAKI.Framework" />
 	</Target>
 </Project>

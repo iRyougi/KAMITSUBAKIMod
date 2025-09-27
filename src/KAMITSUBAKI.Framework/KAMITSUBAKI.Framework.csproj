@@ -15,6 +15,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\KAMITSUBAKI.Framework.Core\KAMITSUBAKI.Framework.Core.csproj" />
+		<ProjectReference Include="..\KAMITSUBAKI.Framework.Services\KAMITSUBAKI.Framework.Services.csproj" />
+		<ProjectReference Include="..\KAMITSUBAKI.Framework.UI\KAMITSUBAKI.Framework.UI.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Reference Include="BepInEx">
 			<HintPath>$(BepInExDir)\core\BepInEx.dll</HintPath>
 			<Private>false</Private>
@@ -31,7 +37,6 @@
 			<HintPath>$(GameManagedDir)\UnityEngine.CoreModule.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
-		<!-- 只要框架里不直接用 Assembly-CSharp/Game 脚本，可不引用 -->
 		<Reference Include="UnityEngine.UI">
 			<HintPath>$(GameManagedDir)\UnityEngine.UI.dll</HintPath>
 			<Private>false</Private>
@@ -44,27 +49,10 @@
 			<HintPath>$(GameManagedDir)\Newtonsoft.Json.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
-		<Reference Include="UnityEngine.AssetBundleModule">
-			<HintPath>$(GameManagedDir)\UnityEngine.AssetBundleModule.dll</HintPath>
-			<Private>false</Private>
-		</Reference>
-		<Reference Include="UnityEngine.JSONSerializeModule">
-			<HintPath>$(GameManagedDir)\UnityEngine.JSONSerializeModule.dll</HintPath>
-			<Private>false</Private>
-		</Reference>
-		<Reference Include="UnityEngine.ImageConversionModule">
-			<HintPath>$(GameManagedDir)\UnityEngine.ImageConversionModule.dll</HintPath>
-			<Private>false</Private>
-		</Reference>
-		<Reference Include="UnityEngine.AudioModule">
-			<HintPath>$(GameManagedDir)\UnityEngine.AudioModule.dll</HintPath>
-			<Private>false</Private>
-		</Reference>
-		
 	</ItemGroup>
 
 	<Target Name="CopyToBepInEx" AfterTargets="Build" Condition="'$(BepInExPluginsDir)'!=''">
 		<MakeDir Directories="$(BepInExPluginsDir)\KAMITSUBAKI.Framework" />
-		<Copy SourceFiles="$(OutputPath)\KAMITSUBAKI.Framework.dll" DestinationFolder="$(BepInExPluginsDir)\KAMITSUBAKI.Framework" />
+		<Copy SourceFiles="$(OutputPath)\KAMITSUBAKI.Framework.dll;$(OutputPath)\KAMITSUBAKI.Framework.Core.dll;$(OutputPath)\KAMITSUBAKI.Framework.Services.dll;$(OutputPath)\KAMITSUBAKI.Framework.UI.dll" DestinationFolder="$(BepInExPluginsDir)\KAMITSUBAKI.Framework" />
 	</Target>
 </Project>

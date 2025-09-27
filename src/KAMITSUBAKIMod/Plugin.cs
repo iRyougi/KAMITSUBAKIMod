@@ -2,12 +2,13 @@ using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 using KAMITSUBAKIMod.Runtime;
+using KAMITSUBAKIMod.Text;
 using UnityEngine;
 
 namespace KAMITSUBAKIMod
 {
     [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
-    [BepInDependency("kamitsubaki.framework", BepInDependency.DependencyFlags.HardDependency)] // 确保框架先于本 Mod 加载
+    [BepInDependency("kamitsubaki.framework", BepInDependency.DependencyFlags.HardDependency)]
     public class Plugin : BaseUnityPlugin
     {
         public const string PluginGuid = "com.iryougi.kcr.kamitsubakimod";
@@ -21,22 +22,26 @@ namespace KAMITSUBAKIMod
         {
             Log = Logger;
 
-            // 基础运行组件
+            // 创建运行时组件
             var go = new GameObject("KAMITSUBAKIModRunner") { hideFlags = HideFlags.HideAndDontSave };
-            DontDestroyOnLoad(go); go.AddComponent<UpdateLogger>();
+            DontDestroyOnLoad(go); 
+            go.AddComponent<UpdateLogger>();
 
             var scannerGO = new GameObject("KAMITSUBAKI_BookScanner") { hideFlags = HideFlags.HideAndDontSave };
-            DontDestroyOnLoad(scannerGO); scannerGO.AddComponent<BookScanner>();
+            DontDestroyOnLoad(scannerGO); 
+            scannerGO.AddComponent<BookScanner>();
 
             var rewriterGO = new GameObject("KAMITSUBAKI_BookLiveRewriter") { hideFlags = HideFlags.HideAndDontSave };
-            DontDestroyOnLoad(rewriterGO); rewriterGO.AddComponent<BookLiveRewriter>();
+            DontDestroyOnLoad(rewriterGO); 
+            rewriterGO.AddComponent<BookLiveRewriter>();
 
             var editorGO = new GameObject("KAMITSUBAKI_StoryEditorGUI") { hideFlags = HideFlags.HideAndDontSave };
-            DontDestroyOnLoad(editorGO); editorGO.AddComponent<StoryEditorGUI>();
+            DontDestroyOnLoad(editorGO); 
+            editorGO.AddComponent<StoryEditorGUI>();
 
-            new GameObject("VfsTestHarness").AddComponent<KAMITSUBAKIMod.Runtime.VfsTestHarness>();
+            new GameObject("VfsTestHarness").AddComponent<VfsTestHarness>();
 
-            // Harmony 只初始化一次
+            // Harmony 只需初始化一次
             _harmony = new Harmony(PluginGuid);
             try
             {
@@ -48,14 +53,22 @@ namespace KAMITSUBAKIMod
                 Log.LogError("Harmony PatchAll failed: " + e);
             }
 
-            // 载入文本替换映射
-            Text.TextBookMap.Load();
+            // 加载文本替换映射
+            TextBookMap.Load();
 
-            // 诊断：确认框架是否已加载
-            if (KAMITSUBAKI.Framework.FrameworkPlugin.Assets == null)
-                Log.LogWarning("FrameworkPlugin.Assets is null (framework may not have loaded!)");
-            else
-                Log.LogInfo("Framework detected (Assets service ready)");
+            // 确保框架是否已加载
+            try
+            {
+                var assets = KAMITSUBAKI.Framework.FrameworkPlugin.Assets;
+                if (assets == null)
+                    Log.LogWarning("FrameworkPlugin.Assets is null (framework may not have loaded!)");
+                else
+                    Log.LogInfo("Framework detected (Assets service ready)");
+            }
+            catch (System.TypeLoadException)
+            {
+                Log.LogWarning("Framework not loaded yet (TypeLoadException)");
+            }
 
             Logger.LogInfo($"{PluginName} {PluginVersion} loaded");
         }
@@ -75,7 +88,7 @@ namespace KAMITSUBAKIMod
             if (_timer >= 5f)
             {
                 _timer = 0f;
-                // 可在此输出轻量心跳日志以确认未卡死
+                // 定期内存检查或其他日志，确保未卡死
                 // Plugin.Log?.LogDebug("[Heartbeat]");
             }
         }

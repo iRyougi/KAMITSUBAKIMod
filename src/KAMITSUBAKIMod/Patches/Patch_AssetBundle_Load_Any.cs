@@ -1,6 +1,7 @@
 ﻿using System;
 using HarmonyLib;
 using UnityEngine;
+using KAMITSUBAKIMod.Runtime;
 
 namespace KAMITSUBAKIMod.Patches
 {
@@ -41,7 +42,7 @@ namespace KAMITSUBAKIMod.Patches
             if (isBook)
             {
                 string key = !string.IsNullOrEmpty(name) ? name : __result.name;
-                KAMITSUBAKIMod.Runtime.BookRegistry.Register(key, __result);
+                BookRegistry.Register(key, __result);
             }
         }
     }
