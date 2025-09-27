@@ -34,6 +34,8 @@ namespace KAMITSUBAKIMod
             var editorGO = new GameObject("KAMITSUBAKI_StoryEditorGUI") { hideFlags = HideFlags.HideAndDontSave };
             DontDestroyOnLoad(editorGO); editorGO.AddComponent<StoryEditorGUI>();
 
+            new GameObject("VfsTestHarness").AddComponent<KAMITSUBAKIMod.Runtime.VfsTestHarness>();
+
             // Harmony 只初始化一次
             _harmony = new Harmony(PluginGuid);
             try

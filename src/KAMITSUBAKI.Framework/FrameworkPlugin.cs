@@ -3,6 +3,9 @@ using BepInEx.Logging;
 using HarmonyLib;
 using KAMITSUBAKI.Framework.Loader;
 using KAMITSUBAKI.Framework.Services;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace KAMITSUBAKI.Framework
 {
@@ -45,6 +48,29 @@ namespace KAMITSUBAKI.Framework
         private void OnDestroy()
         {
             try { Harmony?.UnpatchSelf(); } catch { }
+        }
+
+        // ----------- Public Helper APIs -----------
+        public static bool TryGetOverride(string virtualPath, out string fullPath)
+        {
+            fullPath = null;
+            return Assets != null && Assets.TryGetOverrideFile(virtualPath, out fullPath);
+        }
+
+        public static T LoadOrNull<T>(string virtualPath) where T : UnityEngine.Object
+        {
+            if (Assets != null && Assets.TryLoadFromVFS(virtualPath, typeof(T), out var obj))
+                return obj as T;
+            return null;
+        }
+
+        public static void ClearVfsCache() => Assets?.ClearCache();
+        public static bool RemoveVfsCache(string virtualPath) => Assets != null && Assets.RemoveCache(virtualPath);
+
+        public static IEnumerable<IAssetService.MountInfo> ListMounts()
+        {
+            if (Assets == null) yield break;
+            foreach (var m in Assets.EnumerateMounts()) yield return m;
         }
     }
 }

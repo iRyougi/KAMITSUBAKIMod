@@ -38,6 +38,12 @@ namespace KAMITSUBAKI.Framework.Services
             _log.LogInfo($"[VFS] mount add: {mount.ModId} from='{mount.From}' -> '{mount.To}' prio={mount.Priority} exists={(Directory.Exists(mount.From) ? 1:0)} total={_mounts.Count}");
         }
 
+        public IEnumerable<IAssetService.MountInfo> EnumerateMounts()
+        {
+            foreach (var m in _mounts)
+                yield return new IAssetService.MountInfo { ModId = m.ModId, From = m.From, To = m.To, Priority = m.Priority };
+        }
+
         public bool TryGetOverrideFile(string virtualPath, out string fullPath)
         {
             virtualPath = (virtualPath ?? "").Replace("\\", "/");
@@ -87,6 +93,29 @@ namespace KAMITSUBAKI.Framework.Services
                 }
             }
             return false;
+        }
+
+        public void ClearCache()
+        {
+            int n = _cache.Count;
+            _cache.Clear();
+            _log.LogInfo($"[VFS] cache cleared ({n} entries)");
+        }
+
+        public bool RemoveCache(string virtualPath)
+        {
+            if (string.IsNullOrEmpty(virtualPath)) return false;
+            var removed = new List<string>();
+            foreach (var k in _cache.Keys)
+            {
+                int idx = k.IndexOf(':');
+                var vp = idx >= 0 ? k.Substring(idx + 1) : k;
+                if (string.Equals(vp, virtualPath, StringComparison.OrdinalIgnoreCase))
+                    removed.Add(k);
+            }
+            for (int i = 0; i < removed.Count; i++) _cache.Remove(removed[i]);
+            if (removed.Count > 0) _log.LogInfo($"[VFS] cache remove '{virtualPath}' x{removed.Count}");
+            return removed.Count > 0;
         }
 
         static UnityEngine.Object LoadFileAsUnityObject(string path, Type type)
